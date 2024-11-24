@@ -6,8 +6,8 @@
     <string name="input_expiration_date">Expiration date</string>
     <string name="input_date_of_birth">Date of birth</string>
 
-    <string name="info_loading">Reading data…</string>
-    <string name="info_scan_passport">Please fill the details below and place your phone on top of the passport.\n\nFollowing information is required to decrypt passport data locally. We do not store, upload or share any of your data. The app is completely open source and available for audit.</string>
+    <string name="info_loading">Đang đọc dữ liệu…</string>
+    <string name="info_scan_passport">Nhập thông tin 6 số cuối căn cước và đặt thẻ vào vị trí đọc NFC</string>
     <string name="error_input">Please provide details to read passport</string>
     <string name="error_read">Failed to read passport</string>
 

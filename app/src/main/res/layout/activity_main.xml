@@ -62,38 +62,38 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_expiration_date_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/activity_vertical_margin">
+<!--            <com.google.android.material.textfield.TextInputLayout-->
+<!--                android:id="@+id/input_expiration_date_layout"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="@dimen/activity_vertical_margin">-->
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_expiration_date"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/input_expiration_date"
-                    android:inputType="date"
-                    android:focusableInTouchMode="false" />
+<!--                <com.google.android.material.textfield.TextInputEditText-->
+<!--                    android:id="@+id/input_expiration_date"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:hint="@string/input_expiration_date"-->
+<!--                    android:inputType="date"-->
+<!--                    android:focusableInTouchMode="false" />-->
 
-            </com.google.android.material.textfield.TextInputLayout>
+<!--            </com.google.android.material.textfield.TextInputLayout>-->
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_date_of_birth_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
-                android:layout_marginBottom="@dimen/activity_vertical_margin">
+<!--            <com.google.android.material.textfield.TextInputLayout-->
+<!--                android:id="@+id/input_date_of_birth_layout"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginTop="@dimen/activity_vertical_margin"-->
+<!--                android:layout_marginBottom="@dimen/activity_vertical_margin">-->
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_date_of_birth"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/input_date_of_birth"
-                    android:inputType="date"
-                    android:focusableInTouchMode="false" />
+<!--                <com.google.android.material.textfield.TextInputEditText-->
+<!--                    android:id="@+id/input_date_of_birth"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:hint="@string/input_date_of_birth"-->
+<!--                    android:inputType="date"-->
+<!--                    android:focusableInTouchMode="false" />-->
 
-            </com.google.android.material.textfield.TextInputLayout>
+<!--            </com.google.android.material.textfield.TextInputLayout>-->
 
         </LinearLayout>
 

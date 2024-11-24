@@ -17,6 +17,7 @@
 
 package com.tananaev.passportreader
 
+//import com.tananaev.passportreader.ImageUtil.decodeImage
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
@@ -36,7 +37,6 @@ import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
-import com.tananaev.passportreader.ImageUtil.decodeImage
 import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import net.sf.scuba.smartcards.CardService
 import org.apache.commons.io.IOUtils
@@ -45,8 +45,8 @@ import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.x509.Certificate
-import org.jmrtd.BACKey
-import org.jmrtd.BACKeySpec
+import org.jmrtd.AccessKeySpec
+import org.jmrtd.PACEKeySpec
 import org.jmrtd.PassportService
 import org.jmrtd.lds.CardAccessFile
 import org.jmrtd.lds.ChipAuthenticationPublicKeyInfo
@@ -57,6 +57,9 @@ import org.jmrtd.lds.icao.DG14File
 import org.jmrtd.lds.icao.DG1File
 import org.jmrtd.lds.icao.DG2File
 import org.jmrtd.lds.iso19794.FaceImageInfo
+import org.bouncycastle.asn1.ASN1String
+import org.bouncycastle.asn1.ASN1TaggedObject
+import org.bouncycastle.asn1.DEROctetString
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.InputStream
@@ -71,13 +74,15 @@ import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Arrays
+import java.util.Calendar
+import java.util.Locale
 
 abstract class MainActivity : AppCompatActivity() {
 
     private lateinit var passportNumberView: EditText
-    private lateinit var expirationDateView: EditText
-    private lateinit var birthDateView: EditText
+//    private lateinit var expirationDateView: EditText
+//    private lateinit var birthDateView: EditText
     private var passportNumberFromIntent = false
     private var encodePhotoToBase64 = false
     private lateinit var mainLayout: View
@@ -107,14 +112,14 @@ abstract class MainActivity : AppCompatActivity() {
         }
 
         passportNumberView = findViewById(R.id.input_passport_number)
-        expirationDateView = findViewById(R.id.input_expiration_date)
-        birthDateView = findViewById(R.id.input_date_of_birth)
+//        expirationDateView = findViewById(R.id.input_expiration_date)
+//        birthDateView = findViewById(R.id.input_date_of_birth)
         mainLayout = findViewById(R.id.main_layout)
         loadingLayout = findViewById(R.id.loading_layout)
 
         passportNumberView.setText(preferences.getString(KEY_PASSPORT_NUMBER, null))
-        expirationDateView.setText(preferences.getString(KEY_EXPIRATION_DATE, null))
-        birthDateView.setText(preferences.getString(KEY_BIRTH_DATE, null))
+//        expirationDateView.setText(preferences.getString(KEY_EXPIRATION_DATE, null))
+//        birthDateView.setText(preferences.getString(KEY_BIRTH_DATE, null))
 
         passportNumberView.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -125,39 +130,39 @@ abstract class MainActivity : AppCompatActivity() {
             }
         })
 
-        expirationDateView.setOnClickListener {
-            val c = loadDate(expirationDateView)
-            val dialog = DatePickerDialog.newInstance(
-                { _, year, monthOfYear, dayOfMonth ->
-                    saveDate(
-                        expirationDateView,
-                        year,
-                        monthOfYear,
-                        dayOfMonth,
-                        KEY_EXPIRATION_DATE,
-                    )
-                },
-                c[Calendar.YEAR],
-                c[Calendar.MONTH],
-                c[Calendar.DAY_OF_MONTH],
-            )
-            dialog.showYearPickerFirst(true)
-            fragmentManager.beginTransaction().add(dialog, null).commit()
-        }
-
-        birthDateView.setOnClickListener {
-            val c = loadDate(birthDateView)
-            val dialog = DatePickerDialog.newInstance(
-                { _, year, monthOfYear, dayOfMonth ->
-                    saveDate(birthDateView, year, monthOfYear, dayOfMonth, KEY_BIRTH_DATE)
-                },
-                c[Calendar.YEAR],
-                c[Calendar.MONTH],
-                c[Calendar.DAY_OF_MONTH],
-            )
-            dialog.showYearPickerFirst(true)
-            fragmentManager.beginTransaction().add(dialog, null).commit()
-        }
+//        expirationDateView.setOnClickListener {
+//            val c = loadDate(expirationDateView)
+//            val dialog = DatePickerDialog.newInstance(
+//                { _, year, monthOfYear, dayOfMonth ->
+//                    saveDate(
+//                        expirationDateView,
+//                        year,
+//                        monthOfYear,
+//                        dayOfMonth,
+//                        KEY_EXPIRATION_DATE,
+//                    )
+//                },
+//                c[Calendar.YEAR],
+//                c[Calendar.MONTH],
+//                c[Calendar.DAY_OF_MONTH],
+//            )
+//            dialog.showYearPickerFirst(true)
+//            fragmentManager.beginTransaction().add(dialog, null).commit()
+//        }
+//
+//        birthDateView.setOnClickListener {
+//            val c = loadDate(birthDateView)
+//            val dialog = DatePickerDialog.newInstance(
+//                { _, year, monthOfYear, dayOfMonth ->
+//                    saveDate(birthDateView, year, monthOfYear, dayOfMonth, KEY_BIRTH_DATE)
+//                },
+//                c[Calendar.YEAR],
+//                c[Calendar.MONTH],
+//                c[Calendar.DAY_OF_MONTH],
+//            )
+//            dialog.showYearPickerFirst(true)
+//            fragmentManager.beginTransaction().add(dialog, null).commit()
+//        }
     }
 
     override fun onResume() {
@@ -190,11 +195,14 @@ abstract class MainActivity : AppCompatActivity() {
             if (tag?.techList?.contains("android.nfc.tech.IsoDep") == true) {
                 val preferences = PreferenceManager.getDefaultSharedPreferences(this)
                 val passportNumber = preferences.getString(KEY_PASSPORT_NUMBER, null)
-                val expirationDate = convertDate(preferences.getString(KEY_EXPIRATION_DATE, null))
-                val birthDate = convertDate(preferences.getString(KEY_BIRTH_DATE, null))
-                if (!passportNumber.isNullOrEmpty() && !expirationDate.isNullOrEmpty() && !birthDate.isNullOrEmpty()) {
-                    val bacKey: BACKeySpec = BACKey(passportNumber, birthDate, expirationDate)
-                    ReadTask(IsoDep.get(tag), bacKey).execute()
+//                val expirationDate = convertDate(preferences.getString(KEY_EXPIRATION_DATE, null))
+//                val birthDate = convertDate(preferences.getString(KEY_BIRTH_DATE, null))
+//                if (!passportNumber.isNullOrEmpty() && !expirationDate.isNullOrEmpty() && !birthDate.isNullOrEmpty()) {
+                if (!passportNumber.isNullOrEmpty()) {
+//                    val bacKey: BACKeySpec = BACKey(passportNumber, birthDate, expirationDate)
+//                    ReadTask(IsoDep.get(tag), bacKey).execute()
+                    val paceKeySpec: PACEKeySpec = PACEKeySpec.createCANKey(passportNumber)
+                    ReadTask(IsoDep.get(tag), paceKeySpec).execute()
                     mainLayout.visibility = View.GONE
                     loadingLayout.visibility = View.VISIBLE
                 } else {
@@ -205,7 +213,7 @@ abstract class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("StaticFieldLeak")
-    private inner class ReadTask(private val isoDep: IsoDep, private val bacKey: BACKeySpec) : AsyncTask<Void?, Void?, Exception?>() {
+    private inner class ReadTask(private val isoDep: IsoDep, private val accessKeySpec: AccessKeySpec) : AsyncTask<Void?, Void?, Exception?>() {
 
         private lateinit var dg1File: DG1File
         private lateinit var dg2File: DG2File
@@ -237,7 +245,7 @@ abstract class MainActivity : AppCompatActivity() {
                     for (securityInfo: SecurityInfo in securityInfoCollection) {
                         if (securityInfo is PACEInfo) {
                             service.doPACE(
-                                bacKey,
+                                accessKeySpec,
                                 securityInfo.objectIdentifier,
                                 PACEInfo.toParameterSpec(securityInfo.parameterId),
                                 null,
@@ -253,7 +261,7 @@ abstract class MainActivity : AppCompatActivity() {
                     try {
                         service.getInputStream(PassportService.EF_COM).read()
                     } catch (e: Exception) {
-                        service.doBAC(bacKey)
+                        service.doBAC(accessKeySpec)
                     }
                 }
                 val dg1In = service.getInputStream(PassportService.EF_DG1)
@@ -262,6 +270,13 @@ abstract class MainActivity : AppCompatActivity() {
                 dg2File = DG2File(dg2In)
                 val sodIn = service.getInputStream(PassportService.EF_SOD)
                 sodFile = SODFile(sodIn)
+
+                val dg13In = service.getInputStream(PassportService.EF_DG13)
+
+                val dg13Encoded = IOUtils.toByteArray(dg13In)
+//                val test = getDg13VNM(dg13Encoded)
+                val test = decodeASN1(dg13Encoded)
+                print(test)
 
                 doChipAuth(service)
                 doPassiveAuth()
@@ -277,7 +292,7 @@ abstract class MainActivity : AppCompatActivity() {
                     val buffer = ByteArray(imageLength)
                     dataInputStream.readFully(buffer, 0, imageLength)
                     val inputStream: InputStream = ByteArrayInputStream(buffer, 0, imageLength)
-                    bitmap = decodeImage(this@MainActivity, faceImageInfo.mimeType, inputStream)
+//                    bitmap = decodeImage(this@MainActivity, faceImageInfo.mimeType, inputStream)
                     imageBase64 = Base64.encodeToString(buffer, Base64.DEFAULT)
                 }
             } catch (e: Exception) {
@@ -293,6 +308,7 @@ abstract class MainActivity : AppCompatActivity() {
                 val dg14InByte = ByteArrayInputStream(dg14Encoded)
                 dg14File = DG14File(dg14InByte)
                 val dg14FileSecurityInfo = dg14File.securityInfos
+
                 for (securityInfo: SecurityInfo in dg14FileSecurityInfo) {
                     if (securityInfo is ChipAuthenticationPublicKeyInfo) {
                         service.doEACCA(
@@ -304,6 +320,7 @@ abstract class MainActivity : AppCompatActivity() {
                         chipAuthSucceeded = true
                     }
                 }
+
             } catch (e: Exception) {
                 Log.w(TAG, e)
             }
@@ -461,4 +478,70 @@ abstract class MainActivity : AppCompatActivity() {
         private const val KEY_EXPIRATION_DATE = "expirationDate"
         private const val KEY_BIRTH_DATE = "birthDate"
     }
+}
+fun getDg13VNM(byteDg13: ByteArray?): String {
+    if (byteDg13 == null) return ""
+
+    // Tạo ASN1InputStream từ byte array
+    val inputStream = ASN1InputStream(byteDg13)
+    val asn1Object: ASN1Primitive = inputStream.readObject()
+
+    if (asn1Object is ASN1Sequence) {
+        val sequence = asn1Object as ASN1Sequence
+
+        // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
+        val asn1Data = sequence.getObjectAt(0).toString()
+
+        // Regex để lấy UTF8String hoặc PrintableString
+        val regex = Regex("(UTF8String|PrintableString)\\((.*?)\\)")
+        val matches = regex.findAll(asn1Data)
+
+        // Lưu các giá trị được trích xuất
+        val listDg13 = matches.mapNotNull { it.groups[2]?.value }.toList()
+
+        // Kết hợp thành chuỗi
+        val raw = listDg13.joinToString(", ")
+        return raw
+    }
+    return "Đọc lỗi"
+}
+
+fun decodeASN1(data: ByteArray): String {
+    // Khởi tạo ASN1InputStream từ ByteArray
+    val asn1InputStream = ASN1InputStream(ByteArrayInputStream(data))
+
+    // Đọc ASN.1 đối tượng
+    val asn1Object: ASN1Primitive = asn1InputStream.readObject()
+
+    // Xử lý dữ liệu ASN.1 nếu là Sequence
+    if (asn1Object is ASN1Sequence) {
+        val sequence = asn1Object
+
+        val result = StringBuilder("Decoded ASN.1:\n")
+
+        for (i in 0 until sequence.size()) {
+            val element = sequence.getObjectAt(i)
+
+            when (element) {
+                is ASN1String -> {
+                    // Xử lý kiểu ASN.1 String (PrintableString, UTF8String, ...)
+                    result.append("String: ${element.string}\n")
+                }
+                is DEROctetString -> {
+                    // Xử lý kiểu OctetString
+                    result.append("OctetString: ${element.octets.decodeToString()}\n")
+                }
+                is ASN1TaggedObject -> {
+                    // Xử lý TaggedObject
+                    result.append("TaggedObject: ${element.toString()}\n")
+                }
+                else -> {
+                    // Xử lý các loại khác
+                    result.append("Other: ${element.toString()}\n")
+                }
+            }
+        }
+        return result.toString()
+    }
+    return "Invalid ASN.1 structure"
 }
