@@ -17,7 +17,6 @@
 
 package com.tananaev.passportreader
 
-//import com.tananaev.passportreader.ImageUtil.decodeImage
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
@@ -37,7 +36,6 @@ import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
-import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import net.sf.scuba.smartcards.CardService
 import org.apache.commons.io.IOUtils
 import org.bouncycastle.asn1.ASN1InputStream
@@ -72,17 +70,12 @@ import java.security.cert.PKIXParameters
 import java.security.cert.X509Certificate
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
-import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.Arrays
-import java.util.Calendar
-import java.util.Locale
 
 abstract class MainActivity : AppCompatActivity() {
 
     private lateinit var passportNumberView: EditText
-//    private lateinit var expirationDateView: EditText
-//    private lateinit var birthDateView: EditText
+
     private var passportNumberFromIntent = false
     private var encodePhotoToBase64 = false
     private lateinit var mainLayout: View
@@ -93,76 +86,30 @@ abstract class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val dateOfBirth = intent.getStringExtra("dateOfBirth")
-        val dateOfExpiry = intent.getStringExtra("dateOfExpiry")
+
         val passportNumber = intent.getStringExtra("passportNumber")
+
         encodePhotoToBase64 = intent.getBooleanExtra("photoAsBase64", false)
-        if (dateOfBirth != null) {
-            PreferenceManager.getDefaultSharedPreferences(this)
-                .edit().putString(KEY_BIRTH_DATE, dateOfBirth).apply()
-        }
-        if (dateOfExpiry != null) {
-            PreferenceManager.getDefaultSharedPreferences(this)
-                .edit().putString(KEY_EXPIRATION_DATE, dateOfExpiry).apply()
-        }
         if (passportNumber != null) {
-            PreferenceManager.getDefaultSharedPreferences(this)
-                .edit().putString(KEY_PASSPORT_NUMBER, passportNumber).apply()
+            PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putString(KEY_PASSPORT_NUMBER, passportNumber).apply()
             passportNumberFromIntent = true
         }
 
         passportNumberView = findViewById(R.id.input_passport_number)
-//        expirationDateView = findViewById(R.id.input_expiration_date)
-//        birthDateView = findViewById(R.id.input_date_of_birth)
         mainLayout = findViewById(R.id.main_layout)
         loadingLayout = findViewById(R.id.loading_layout)
 
         passportNumberView.setText(preferences.getString(KEY_PASSPORT_NUMBER, null))
-//        expirationDateView.setText(preferences.getString(KEY_EXPIRATION_DATE, null))
-//        birthDateView.setText(preferences.getString(KEY_BIRTH_DATE, null))
 
         passportNumberView.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable) {
-                PreferenceManager.getDefaultSharedPreferences(this@MainActivity)
-                    .edit().putString(KEY_PASSPORT_NUMBER, s.toString()).apply()
+                PreferenceManager.getDefaultSharedPreferences(this@MainActivity).edit()
+                    .putString(KEY_PASSPORT_NUMBER, s.toString()).apply()
             }
         })
-
-//        expirationDateView.setOnClickListener {
-//            val c = loadDate(expirationDateView)
-//            val dialog = DatePickerDialog.newInstance(
-//                { _, year, monthOfYear, dayOfMonth ->
-//                    saveDate(
-//                        expirationDateView,
-//                        year,
-//                        monthOfYear,
-//                        dayOfMonth,
-//                        KEY_EXPIRATION_DATE,
-//                    )
-//                },
-//                c[Calendar.YEAR],
-//                c[Calendar.MONTH],
-//                c[Calendar.DAY_OF_MONTH],
-//            )
-//            dialog.showYearPickerFirst(true)
-//            fragmentManager.beginTransaction().add(dialog, null).commit()
-//        }
-//
-//        birthDateView.setOnClickListener {
-//            val c = loadDate(birthDateView)
-//            val dialog = DatePickerDialog.newInstance(
-//                { _, year, monthOfYear, dayOfMonth ->
-//                    saveDate(birthDateView, year, monthOfYear, dayOfMonth, KEY_BIRTH_DATE)
-//                },
-//                c[Calendar.YEAR],
-//                c[Calendar.MONTH],
-//                c[Calendar.DAY_OF_MONTH],
-//            )
-//            dialog.showYearPickerFirst(true)
-//            fragmentManager.beginTransaction().add(dialog, null).commit()
-//        }
     }
 
     override fun onResume() {
@@ -171,7 +118,8 @@ abstract class MainActivity : AppCompatActivity() {
         if (adapter != null) {
             val intent = Intent(applicationContext, this.javaClass)
             intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-            val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+            val pendingIntent =
+                PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_MUTABLE)
             val filter = arrayOf(arrayOf("android.nfc.tech.IsoDep"))
             adapter.enableForegroundDispatch(this, pendingIntent, null, filter)
         }
@@ -195,25 +143,25 @@ abstract class MainActivity : AppCompatActivity() {
             if (tag?.techList?.contains("android.nfc.tech.IsoDep") == true) {
                 val preferences = PreferenceManager.getDefaultSharedPreferences(this)
                 val passportNumber = preferences.getString(KEY_PASSPORT_NUMBER, null)
-//                val expirationDate = convertDate(preferences.getString(KEY_EXPIRATION_DATE, null))
-//                val birthDate = convertDate(preferences.getString(KEY_BIRTH_DATE, null))
-//                if (!passportNumber.isNullOrEmpty() && !expirationDate.isNullOrEmpty() && !birthDate.isNullOrEmpty()) {
+
                 if (!passportNumber.isNullOrEmpty()) {
-//                    val bacKey: BACKeySpec = BACKey(passportNumber, birthDate, expirationDate)
-//                    ReadTask(IsoDep.get(tag), bacKey).execute()
+
                     val paceKeySpec: PACEKeySpec = PACEKeySpec.createCANKey(passportNumber)
                     ReadTask(IsoDep.get(tag), paceKeySpec).execute()
                     mainLayout.visibility = View.GONE
                     loadingLayout.visibility = View.VISIBLE
                 } else {
-                    Snackbar.make(passportNumberView, R.string.error_input, Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(passportNumberView, R.string.error_input, Snackbar.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
     }
 
     @SuppressLint("StaticFieldLeak")
-    private inner class ReadTask(private val isoDep: IsoDep, private val accessKeySpec: AccessKeySpec) : AsyncTask<Void?, Void?, Exception?>() {
+    private inner class ReadTask(
+        private val isoDep: IsoDep, private val accessKeySpec: AccessKeySpec
+    ) : AsyncTask<Void?, Void?, Exception?>() {
 
         private lateinit var dg1File: DG1File
         private lateinit var dg2File: DG2File
@@ -240,7 +188,8 @@ abstract class MainActivity : AppCompatActivity() {
                 service.open()
                 var paceSucceeded = false
                 try {
-                    val cardAccessFile = CardAccessFile(service.getInputStream(PassportService.EF_CARD_ACCESS))
+                    val cardAccessFile =
+                        CardAccessFile(service.getInputStream(PassportService.EF_CARD_ACCESS))
                     val securityInfoCollection = cardAccessFile.securityInfos
                     for (securityInfo: SecurityInfo in securityInfoCollection) {
                         if (securityInfo is PACEInfo) {
@@ -334,8 +283,11 @@ abstract class MainActivity : AppCompatActivity() {
                 val dg1Hash = digest.digest(dg1File.encoded)
                 val dg2Hash = digest.digest(dg2File.encoded)
 
-                if (Arrays.equals(dg1Hash, dataHashes[1]) && Arrays.equals(dg2Hash, dataHashes[2])
-                    && (!chipAuthSucceeded || Arrays.equals(dg14Hash, dataHashes[14]))) {
+                if (Arrays.equals(dg1Hash, dataHashes[1]) && Arrays.equals(
+                        dg2Hash,
+                        dataHashes[2]
+                    ) && (!chipAuthSucceeded || Arrays.equals(dg14Hash, dataHashes[14]))
+                ) {
 
                     val asn1InputStream = ASN1InputStream(assets.open("masterList"))
                     val keystore = KeyStore.getInstance(KeyStore.getDefaultType())
@@ -355,7 +307,8 @@ abstract class MainActivity : AppCompatActivity() {
                         for (i in 0 until certSet.size()) {
                             val certificate = Certificate.getInstance(certSet.getObjectAt(i))
                             val pemCertificate = certificate.encoded
-                            val javaCertificate = cf.generateCertificate(ByteArrayInputStream(pemCertificate))
+                            val javaCertificate =
+                                cf.generateCertificate(ByteArrayInputStream(pemCertificate))
                             keystore.setCertificateEntry(i.toString(), javaCertificate)
                         }
                     }
@@ -378,7 +331,11 @@ abstract class MainActivity : AppCompatActivity() {
                     }
                     val sign = Signature.getInstance(sodDigestEncryptionAlgorithm)
                     if (isSSA) {
-                        sign.setParameter(PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1))
+                        sign.setParameter(
+                            PSSParameterSpec(
+                                "SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1
+                            )
+                        )
                     }
                     sign.initVerify(sodFile.docSigningCertificate)
                     sign.update(sodFile.eContent)
@@ -399,8 +356,12 @@ abstract class MainActivity : AppCompatActivity() {
                     Intent(this@MainActivity, ResultActivity::class.java)
                 }
                 val mrzInfo = dg1File.mrzInfo
-                intent.putExtra(ResultActivity.KEY_FIRST_NAME, mrzInfo.secondaryIdentifier.replace("<", " "))
-                intent.putExtra(ResultActivity.KEY_LAST_NAME, mrzInfo.primaryIdentifier.replace("<", " "))
+                intent.putExtra(
+                    ResultActivity.KEY_FIRST_NAME, mrzInfo.secondaryIdentifier.replace("<", " ")
+                )
+                intent.putExtra(
+                    ResultActivity.KEY_LAST_NAME, mrzInfo.primaryIdentifier.replace("<", " ")
+                )
                 intent.putExtra(ResultActivity.KEY_GENDER, mrzInfo.gender.toString())
                 intent.putExtra(ResultActivity.KEY_STATE, mrzInfo.issuingState)
                 intent.putExtra(ResultActivity.KEY_NATIONALITY, mrzInfo.nationality)
@@ -441,44 +402,12 @@ abstract class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun convertDate(input: String?): String? {
-        if (input == null) {
-            return null
-        }
-        return try {
-            SimpleDateFormat("yyMMdd", Locale.US).format(SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(input)!!)
-        } catch (e: ParseException) {
-            Log.w(MainActivity::class.java.simpleName, e)
-            null
-        }
-    }
-
-    private fun loadDate(editText: EditText): Calendar {
-        val calendar = Calendar.getInstance()
-        if (editText.text.isNotEmpty()) {
-            try {
-                calendar.timeInMillis = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(editText.text.toString())!!.time
-            } catch (e: ParseException) {
-                Log.w(MainActivity::class.java.simpleName, e)
-            }
-        }
-        return calendar
-    }
-
-    private fun saveDate(editText: EditText, year: Int, monthOfYear: Int, dayOfMonth: Int, preferenceKey: String) {
-        val value = String.format(Locale.US, "%d-%02d-%02d", year, monthOfYear + 1, dayOfMonth)
-        PreferenceManager.getDefaultSharedPreferences(this)
-            .edit().putString(preferenceKey, value).apply()
-        editText.setText(value)
-    }
-
     companion object {
         private val TAG = MainActivity::class.java.simpleName
         private const val KEY_PASSPORT_NUMBER = "passportNumber"
-        private const val KEY_EXPIRATION_DATE = "expirationDate"
-        private const val KEY_BIRTH_DATE = "birthDate"
     }
 }
+
 fun getDg13VNM(byteDg13: ByteArray?): String {
     if (byteDg13 == null) return ""
 
@@ -527,14 +456,17 @@ fun decodeASN1(data: ByteArray): String {
                     // Xử lý kiểu ASN.1 String (PrintableString, UTF8String, ...)
                     result.append("String: ${element.string}\n")
                 }
+
                 is DEROctetString -> {
                     // Xử lý kiểu OctetString
                     result.append("OctetString: ${element.octets.decodeToString()}\n")
                 }
+
                 is ASN1TaggedObject -> {
                     // Xử lý TaggedObject
                     result.append("TaggedObject: ${element.toString()}\n")
                 }
+
                 else -> {
                     // Xử lý các loại khác
                     result.append("Other: ${element.toString()}\n")
