@@ -15,7 +15,7 @@
  */
 @file:Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
 
-package com.tananaev.passportreader
+package vn.lochv.nfc
 
 import android.annotation.SuppressLint
 import android.app.PendingIntent
@@ -71,6 +71,7 @@ import java.security.cert.X509Certificate
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
 import java.util.Arrays
+import vn.lochv.nfc.ImageUtil.decodeImage
 
 abstract class MainActivity : AppCompatActivity() {
 
@@ -241,7 +242,7 @@ abstract class MainActivity : AppCompatActivity() {
                     val buffer = ByteArray(imageLength)
                     dataInputStream.readFully(buffer, 0, imageLength)
                     val inputStream: InputStream = ByteArrayInputStream(buffer, 0, imageLength)
-//                    bitmap = decodeImage(this@MainActivity, faceImageInfo.mimeType, inputStream)
+                    bitmap = decodeImage(this@MainActivity, faceImageInfo.mimeType, inputStream)
                     imageBase64 = Base64.encodeToString(buffer, Base64.DEFAULT)
                 }
             } catch (e: Exception) {

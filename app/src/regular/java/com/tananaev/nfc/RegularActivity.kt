@@ -1,3 +1,3 @@
-package com.tananaev.passportreader
+package vn.lochv.nfc
 
 class RegularActivity : MainActivity()

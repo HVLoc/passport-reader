@@ -1,25 +1,25 @@
 <resources>
 
-    <string name="app_name">e-Passport Reader</string>
+    <string name="app_name">Đọc NFC CCCD</string>
 
-    <string name="input_passport_number">Passport number</string>
-    <string name="input_expiration_date">Expiration date</string>
-    <string name="input_date_of_birth">Date of birth</string>
+    <string name="input_passport_number">Số căn cước</string>
+    <string name="input_expiration_date">Ngày hết hạn</string>
+    <string name="input_date_of_birth">Ngày sinh</string>
 
     <string name="info_loading">Đang đọc dữ liệu…</string>
     <string name="info_scan_passport">Nhập thông tin 6 số cuối căn cước và đặt thẻ vào vị trí đọc NFC</string>
-    <string name="error_input">Please provide details to read passport</string>
-    <string name="error_read">Failed to read passport</string>
+    <string name="error_input">Vui lòng cung cấp thông tin để đọc CCCD </string>
+    <string name="error_read">Đọc CCCD thất bại</string>
 
-    <string name="result_first_name">First name</string>
-    <string name="result_last_name">Last name</string>
-    <string name="result_gender">Gender</string>
-    <string name="result_state">Country</string>
+    <string name="result_first_name">Tên</string>
+    <string name="result_last_name">Họ</string>
+    <string name="result_gender">Giới tính</string>
+    <string name="result_state">Quốc gia</string>
     <string name="result_nationality">Nationality</string>
-    <string name="result_passive_auth">Passive Authentication</string>
-    <string name="result_chip_auth">Chip Authentication</string>
+    <string name="result_passive_auth">Xác thực thụ động</string>
+    <string name="result_chip_auth">Xác thực Chip</string>
 
-    <string name="pass">Pass</string>
-    <string name="failed">Failed</string>
+    <string name="pass">Thành công</string>
+    <string name="failed">Thất bại</string>
 
 </resources>

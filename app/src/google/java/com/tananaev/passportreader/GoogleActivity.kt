@@ -1,4 +1,4 @@
-package com.tananaev.passportreader
+package vn.lochv.nfc
 
 import android.os.Bundle
 import android.preference.PreferenceManager

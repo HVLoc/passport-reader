@@ -9,14 +9,14 @@ android {
     compileSdk 34
     ndkVersion '23.1.7779620'
     defaultConfig {
-        applicationId 'com.tananaev.passportreader'
+        applicationId 'vn.lochv.nfc'
         minSdkVersion 19
         targetSdkVersion 34
         versionCode 20
         versionName '3.1'
         multiDexEnabled = true
     }
-    namespace 'com.tananaev.passportreader'
+    namespace 'vn.lochv.nfc'
 
     buildFeatures {
         flavorDimensions = ['default']
@@ -53,8 +53,7 @@ dependencies {
     implementation 'com.wdullaer:materialdatetimepicker:3.5.2'
     implementation 'org.jmrtd:jmrtd:0.7.18'
     implementation 'net.sf.scuba:scuba-sc-android:0.0.18'
-//    implementation 'com.madgag.spongycastle:prov:1.54.0.0'
-//    implementation 'com.gemalto.jp2:jp2-android:1.0.3'
+    implementation 'edu.ucar:jj2000:5.2'
     implementation 'com.github.mhshams:jnbis:1.1.0'
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.65' // do not update
     implementation 'commons-io:commons-io:2.11.0'
