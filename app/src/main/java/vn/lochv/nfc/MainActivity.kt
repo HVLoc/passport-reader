@@ -42,7 +42,6 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1Set
-import org.bouncycastle.asn1.util.ASN1Dump
 import org.bouncycastle.asn1.x509.Certificate
 import org.jmrtd.AccessKeySpec
 import org.jmrtd.PACEKeySpec
@@ -172,6 +171,7 @@ abstract class MainActivity : AppCompatActivity() {
         private var chipAuthSucceeded = false
         private var passiveAuthSuccess = false
         private lateinit var dg14Encoded: ByteArray
+        private lateinit var dg13Decoded: String
 
         override fun doInBackground(vararg params: Void?): Exception? {
             try {
@@ -222,9 +222,7 @@ abstract class MainActivity : AppCompatActivity() {
 
                 val dg13In = service.getInputStream(PassportService.EF_DG13)
 
-//                val test = getDg13VNM(dg13Encoded)
-                val test = decodeASN1(dg13In)
-                print(test)
+                dg13Decoded =  decodeASN1(dg13In)
 
                 doChipAuth(service)
                 doPassiveAuth()
@@ -364,6 +362,7 @@ abstract class MainActivity : AppCompatActivity() {
                 intent.putExtra(ResultActivity.KEY_GENDER, mrzInfo.gender.toString())
                 intent.putExtra(ResultActivity.KEY_STATE, mrzInfo.issuingState)
                 intent.putExtra(ResultActivity.KEY_NATIONALITY, mrzInfo.nationality)
+                intent.putExtra(ResultActivity.KEY_VNM, dg13Decoded)
                 val passiveAuthStr = if (passiveAuthSuccess) {
                     getString(R.string.pass)
                 } else {
@@ -407,72 +406,20 @@ abstract class MainActivity : AppCompatActivity() {
     }
 }
 
-fun getDg13VNM(byteDg13: ByteArray?): String {
-    if (byteDg13 == null) return ""
-
-    // Tạo ASN1InputStream từ byte array
-    val inputStream = ASN1InputStream(byteDg13)
-    val asn1Object: ASN1Primitive = inputStream.readObject()
-
-    if (asn1Object is ASN1Sequence) {
-        val sequence = asn1Object as ASN1Sequence
-
-        // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
-        val asn1Data = sequence.getObjectAt(0).toString()
-
-        // Regex để lấy UTF8String hoặc PrintableString
-        val regex = Regex("(UTF8String|PrintableString)\\((.*?)\\)")
-        val matches = regex.findAll(asn1Data)
-
-        // Lưu các giá trị được trích xuất
-        val listDg13 = matches.mapNotNull { it.groups[2]?.value }.toList()
-
-        // Kết hợp thành chuỗi
-        val raw = listDg13.joinToString(", ")
-        return raw
-    }
-    return "Đọc lỗi"
-}
 
 fun decodeASN1(inputStream: InputStream): String {
 
     val asn1In = ASN1InputStream(inputStream)
     val asn1Object: ASN1Primitive = asn1In.readObject()
-    // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
-
-    if (asn1Object is ASN1Sequence) {
-        val sequence = asn1Object as ASN1Sequence
-
-        // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
-        val asn1Data = sequence.getObjectAt(0).toString()
-        println("Decoded ASN.1 asn1Hex: $asn1Data")
-        // Regex để lấy UTF8String hoặc PrintableString
-        val regex = Regex("(UTF8String|PrintableString)\\((.*?)\\)")
-        val matches = regex.findAll(asn1Data)
-
-        // Lưu các giá trị được trích xuất
-        val listDg13 = matches.mapNotNull { it.groups[2]?.value }.toList()
-
-        // Kết hợp thành chuỗi
-        val raw = listDg13.joinToString(", ")
-        return raw
-    }
 
     val asn1Hex = asn1PrimitiveToHex(asn1Object)
     println("ASN.1 asn1Hex: $asn1Hex")
-//    println("Decoded ASN.1 asn1Hex: " +ASN1(asn1Hex, true))
 
-    while (asn1In.available() > 0) {
-        val obj = asn1In.readObject()
-        println(ASN1Dump.dumpAsString(obj, true))
-        //System.out.println(CustomTreeNode.dumpAsString(obj));
-    }
     asn1In.close()
 
-
-//    println("ASN.1 decode: $decode")
-    return "Đọc lỗi"
+    return asn1Hex;
 }
+
 
 fun asn1PrimitiveToHex(asn1Primitive: ASN1Primitive): String {
     val encodedBytes = asn1Primitive.encoded // Encode lại ASN.1 thành byte array

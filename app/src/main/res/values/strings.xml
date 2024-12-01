@@ -18,6 +18,7 @@
     <string name="result_nationality">Nationality</string>
     <string name="result_passive_auth">Xác thực thụ động</string>
     <string name="result_chip_auth">Xác thực Chip</string>
+    <string name="result_chip_dg13">Thông tin VNM Hex</string>
 
     <string name="pass">Thành công</string>
     <string name="failed">Thất bại</string>
