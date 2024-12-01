@@ -10,10 +10,10 @@ android {
     ndkVersion '23.1.7779620'
     defaultConfig {
         applicationId 'vn.lochv.nfc'
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 34
-        versionCode 20
-        versionName '3.1'
+        versionCode 01
+        versionName '1.0'
         multiDexEnabled = true
     }
     namespace 'vn.lochv.nfc'
