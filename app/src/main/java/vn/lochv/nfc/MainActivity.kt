@@ -42,6 +42,7 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.util.ASN1Dump
 import org.bouncycastle.asn1.x509.Certificate
 import org.jmrtd.AccessKeySpec
 import org.jmrtd.PACEKeySpec
@@ -55,9 +56,7 @@ import org.jmrtd.lds.icao.DG14File
 import org.jmrtd.lds.icao.DG1File
 import org.jmrtd.lds.icao.DG2File
 import org.jmrtd.lds.iso19794.FaceImageInfo
-import org.bouncycastle.asn1.ASN1String
-import org.bouncycastle.asn1.ASN1TaggedObject
-import org.bouncycastle.asn1.DEROctetString
+import vn.lochv.nfc.ImageUtil.decodeImage
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.InputStream
@@ -71,7 +70,7 @@ import java.security.cert.X509Certificate
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PSSParameterSpec
 import java.util.Arrays
-import vn.lochv.nfc.ImageUtil.decodeImage
+
 
 abstract class MainActivity : AppCompatActivity() {
 
@@ -223,9 +222,8 @@ abstract class MainActivity : AppCompatActivity() {
 
                 val dg13In = service.getInputStream(PassportService.EF_DG13)
 
-                val dg13Encoded = IOUtils.toByteArray(dg13In)
 //                val test = getDg13VNM(dg13Encoded)
-                val test = decodeASN1(dg13Encoded)
+                val test = decodeASN1(dg13In)
                 print(test)
 
                 doChipAuth(service)
@@ -436,45 +434,48 @@ fun getDg13VNM(byteDg13: ByteArray?): String {
     return "Đọc lỗi"
 }
 
-fun decodeASN1(data: ByteArray): String {
-    // Khởi tạo ASN1InputStream từ ByteArray
-    val asn1InputStream = ASN1InputStream(ByteArrayInputStream(data))
+fun decodeASN1(inputStream: InputStream): String {
 
-    // Đọc ASN.1 đối tượng
-    val asn1Object: ASN1Primitive = asn1InputStream.readObject()
+    val asn1In = ASN1InputStream(inputStream)
+    val asn1Object: ASN1Primitive = asn1In.readObject()
+    // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
 
-    // Xử lý dữ liệu ASN.1 nếu là Sequence
     if (asn1Object is ASN1Sequence) {
-        val sequence = asn1Object
+        val sequence = asn1Object as ASN1Sequence
 
-        val result = StringBuilder("Decoded ASN.1:\n")
+        // Trích xuất dữ liệu từ phần tử đầu tiên trong Sequence
+        val asn1Data = sequence.getObjectAt(0).toString()
+        println("Decoded ASN.1 asn1Hex: $asn1Data")
+        // Regex để lấy UTF8String hoặc PrintableString
+        val regex = Regex("(UTF8String|PrintableString)\\((.*?)\\)")
+        val matches = regex.findAll(asn1Data)
 
-        for (i in 0 until sequence.size()) {
-            val element = sequence.getObjectAt(i)
+        // Lưu các giá trị được trích xuất
+        val listDg13 = matches.mapNotNull { it.groups[2]?.value }.toList()
 
-            when (element) {
-                is ASN1String -> {
-                    // Xử lý kiểu ASN.1 String (PrintableString, UTF8String, ...)
-                    result.append("String: ${element.string}\n")
-                }
-
-                is DEROctetString -> {
-                    // Xử lý kiểu OctetString
-                    result.append("OctetString: ${element.octets.decodeToString()}\n")
-                }
-
-                is ASN1TaggedObject -> {
-                    // Xử lý TaggedObject
-                    result.append("TaggedObject: ${element.toString()}\n")
-                }
-
-                else -> {
-                    // Xử lý các loại khác
-                    result.append("Other: ${element.toString()}\n")
-                }
-            }
-        }
-        return result.toString()
+        // Kết hợp thành chuỗi
+        val raw = listDg13.joinToString(", ")
+        return raw
     }
-    return "Invalid ASN.1 structure"
+
+    val asn1Hex = asn1PrimitiveToHex(asn1Object)
+    println("ASN.1 asn1Hex: $asn1Hex")
+//    println("Decoded ASN.1 asn1Hex: " +ASN1(asn1Hex, true))
+
+    while (asn1In.available() > 0) {
+        val obj = asn1In.readObject()
+        println(ASN1Dump.dumpAsString(obj, true))
+        //System.out.println(CustomTreeNode.dumpAsString(obj));
+    }
+    asn1In.close()
+
+
+//    println("ASN.1 decode: $decode")
+    return "Đọc lỗi"
 }
+
+fun asn1PrimitiveToHex(asn1Primitive: ASN1Primitive): String {
+    val encodedBytes = asn1Primitive.encoded // Encode lại ASN.1 thành byte array
+    return encodedBytes.joinToString("") { "%02x".format(it) } // Chuyển byte array thành chuỗi Hex
+}
+
