@@ -42,6 +42,7 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.util.ASN1Dump
 import org.bouncycastle.asn1.x509.Certificate
 import org.jmrtd.AccessKeySpec
 import org.jmrtd.PACEKeySpec
@@ -407,22 +408,26 @@ abstract class MainActivity : AppCompatActivity() {
 }
 
 
-fun decodeASN1(inputStream: InputStream): String {
+fun decodeASN1(inputStream: InputStream): String
+{
 
     val asn1In = ASN1InputStream(inputStream)
     val asn1Object: ASN1Primitive = asn1In.readObject()
+    println("ASN.1 asn1Hex:"+ ASN1Dump.dumpAsString(asn1Object))
+    val asn1Hex = ASN1Dump.dumpAsString(asn1Object)
 
-    val asn1Hex = asn1PrimitiveToHex(asn1Object)
-    println("ASN.1 asn1Hex: $asn1Hex")
+    // Regex để lấy UTF8String hoặc PrintableString
+    val regex = Regex("(UTF8String|PrintableString)\\((.*?)\\)")
+    val matches = regex.findAll(asn1Hex)
+
+    // Lưu các giá trị được trích xuất
+    val listDg13 = matches.mapNotNull { it.groups[2]?.value }.toList()
+
+    // Kết hợp thành chuỗi
+    val result = listDg13.joinToString(", ")
 
     asn1In.close()
 
-    return asn1Hex;
-}
-
-
-fun asn1PrimitiveToHex(asn1Primitive: ASN1Primitive): String {
-    val encodedBytes = asn1Primitive.encoded // Encode lại ASN.1 thành byte array
-    return encodedBytes.joinToString("") { "%02x".format(it) } // Chuyển byte array thành chuỗi Hex
+    return result;
 }
 
