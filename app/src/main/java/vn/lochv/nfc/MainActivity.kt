@@ -223,7 +223,7 @@ abstract class MainActivity : AppCompatActivity() {
 
                 val dg13In = service.getInputStream(PassportService.EF_DG13)
 
-                dg13Decoded =  decodeASN1(dg13In)
+                dg13Decoded = decodeASN1(dg13In)
 
                 doChipAuth(service)
                 doPassiveAuth()
@@ -408,12 +408,11 @@ abstract class MainActivity : AppCompatActivity() {
 }
 
 
-fun decodeASN1(inputStream: InputStream): String
-{
+fun decodeASN1(inputStream: InputStream): String {
 
     val asn1In = ASN1InputStream(inputStream)
     val asn1Object: ASN1Primitive = asn1In.readObject()
-    println("ASN.1 asn1Hex:"+ ASN1Dump.dumpAsString(asn1Object))
+    println("ASN.1 asn1Hex:" + ASN1Dump.dumpAsString(asn1Object))
     val asn1Hex = ASN1Dump.dumpAsString(asn1Object)
 
     // Regex để lấy UTF8String hoặc PrintableString
